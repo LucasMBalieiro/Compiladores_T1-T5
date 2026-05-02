@@ -56,7 +56,6 @@ constantes: numero (',' numero)*;
 
 numero: paridade? NUMINT ( '..' paridade? NUMINT)?;
 
-// Using the professor's Lexer approach for operators!
 expAritmetica: termo (OP_ARIT1 termo)*;
 termo: fator (OP_ARIT2 fator)*;
 fator: parcela (OP_ARIT3 parcela)*;
