@@ -6,9 +6,11 @@
 
 ## Sobre o projeto
 
-Consiste em um **Analisador Léxico** construído utilizando **Java** e **ANTLR4**.
+Consiste em um **Analisador Sintático** construído utilizando **Java** e **ANTLR4**.
 
-O programa recebe como entrada um arquivo de código-fonte escrito na linguagem LA (Linguagem Algorítmica), realiza a tokenização do texto e grava o resultado formatado em um arquivo de saída.
+O programa recebe como entrada um arquivo de código-fonte escrito na linguagem LA (Linguagem Algorítmica)
+ e realiza a análise sintática e léxica sobre o programa, retornando mensagens de erro 
+caso um seja encontrado no meio da execução.
 
 ## Pré-requisitos
 * **Java Development Kit (JDK):** Versão 21 (ou compatível configurada no `pom.xml`)
@@ -24,5 +26,5 @@ mvn clean package
 Depois execute o programa passando também o caminho para o arquivo de entrada (linguagem LA) e também o caminho onde será escrita a saida.
 
 ```bash
-java -jar T1-1.0-SNAPSHOT-jar-with-dependencies.jar ~/CAMINHO/DO/INPUT.txt ~/CAMINHO/DO/OUTPUT.txt
+java -jar T2-1.0-SNAPSHOT-jar-with-dependencies.jar ~/CAMINHO/DO/INPUT.txt ~/CAMINHO/DO/OUTPUT.txt
 ```
