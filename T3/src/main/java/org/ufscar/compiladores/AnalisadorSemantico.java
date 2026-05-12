@@ -35,15 +35,14 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
         // 3. Verifica se existem parâmetros e os adiciona no escopo local
         if (ctx.parametros() != null) {
             for (GrammarT3Parser.ParametroContext paramCtx : ctx.parametros().parametro()) {
-                // Pega o tipo declarado para este bloco de parâmetros (ex: ... : inteiro)
+                // Pega o tipo declarado
                 String tipoStr = paramCtx.tipoEstendido().getText();
                 TabelaDeSimbolos.TipoLA tipoParam = determinarTipoDeString(tipoStr);
 
-                // Um bloco de parâmetro pode ter vários identificadores (ex: x, y, z : inteiro)
                 for (GrammarT3Parser.IdentificadorContext identCtx : paramCtx.identificador()) {
                     String nomeParam = identCtx.IDENT(0).getText();
 
-                    // Adiciona o parâmetro na tabela local
+                    // Adiciona o paramwtro na tabela local
                     if (escopos.escopoAtual().existe(nomeParam)) {
                         SemanticoUtils.adicionarErroSemantico(identCtx.start, "identificador " + nomeParam + " ja declarado anteriormente");
                     } else {
@@ -53,20 +52,20 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
             }
         }
 
-        // 4. Continua a visitação (vai entrar no 'corpo' e validar as declarações e comandos internos)
+        // 4. Continua a visitação
         super.visitDeclaracaoGlobal(ctx);
 
-        // 5. Destrói o escopo local ao sair da rotina
+        // 5. Destroi o escopo local ao sair da rotina
         escopos.abandonarEscopo();
 
-        return null; // Retornamos null pois já chamamos o super para descer na árvore
+        return null;
     }
 
     @Override
     public Void visitDeclaracaoLocal(GrammarT3Parser.DeclaracaoLocalContext ctx) {
         TabelaDeSimbolos tabela = escopos.escopoAtual();
 
-        if (ctx.tipo() != null) { // É uma declaração de tipo customizado: 'tipo IDENT : tipo'
+        if (ctx.tipo() != null) { // É uma declaração de tipo customizado
             String nomeTipo = ctx.IDENT().getText();
 
             if (tabela.existe(nomeTipo)) {
@@ -74,7 +73,7 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
             } else {
                 TabelaDeSimbolos.EntradaTabelaDeSimbolos entradaTipo = tabela.adicionar(nomeTipo, TabelaDeSimbolos.TipoLA.REGISTRO, TabelaDeSimbolos.Categoria.TIPO);
 
-                // Se o tipo sendo criado for um registro, salvamos a estrutura dele
+                // Se o tipo sendo criado for um registro
                 if (ctx.tipo().registro() != null) {
                     entradaTipo.camposRegistro = criarTabelaParaRegistro(ctx.tipo().registro());
                 }
@@ -91,14 +90,14 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
                 } else {
                     TabelaDeSimbolos.EntradaTabelaDeSimbolos tipoDeclarado = escopos.buscar(tipoSintatico);
 
-                    // Se a variável é de um tipo customizado que já existe (ex: 'declare p : t_pessoa')
+                    // Se a variável é de um tipo customizado que já existe
                     if (tipoDeclarado != null && tipoDeclarado.categoria == TabelaDeSimbolos.Categoria.TIPO) {
                         TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, TabelaDeSimbolos.TipoLA.REGISTRO, TabelaDeSimbolos.Categoria.VARIAVEL);
                         novaVar.nomeTipoCustomizado = tipoDeclarado.nome;
-                        novaVar.camposRegistro = tipoDeclarado.camposRegistro; // Herda a estrutura do registro
+                        novaVar.camposRegistro = tipoDeclarado.camposRegistro;
                     }
                     else if (ctx.variavel().tipo().registro() != null) {
-                        // É um registro criado "in-line" (ex: 'declare p : registro ... fim_registro')
+                        // É um registro criado "in-line"
                         TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, TabelaDeSimbolos.TipoLA.REGISTRO, TabelaDeSimbolos.Categoria.VARIAVEL);
                         novaVar.camposRegistro = criarTabelaParaRegistro(ctx.variavel().tipo().registro());
                     }
@@ -126,7 +125,6 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
     @Override
     public Void visitTipoBasicoIdentificador(GrammarT3Parser.TipoBasicoIdentificadorContext ctx) {
         if (ctx.IDENT() != null) {
-            // Erro 2: Tipo não declarado
             if (escopos.buscar(ctx.IDENT().getText()) == null) {
                 SemanticoUtils.adicionarErroSemantico(ctx.IDENT().getSymbol(), "tipo " + ctx.IDENT().getText() + " nao declarado");
             }
@@ -134,10 +132,9 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
         return super.visitTipoBasicoIdentificador(ctx);
     }
 
+    // Ignora a checagem se o identificador estiver dentro de uma declaração de variável ou parâmetro.
     @Override
     public Void visitIdentificador(GrammarT3Parser.IdentificadorContext ctx) {
-        // Ignora a checagem se o identificador estiver dentro de uma declaração de variável ou parâmetro.
-        // Isso evita que campos de registros ou variáveis recém-criadas acusem "não declarado" falsamente.
         if (!(ctx.getParent() instanceof GrammarT3Parser.VariavelContext) &&
                 !(ctx.getParent() instanceof GrammarT3Parser.ParametroContext)) {
 
@@ -154,14 +151,12 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
 
     @Override
     public Void visitComandoAtribuicao(GrammarT3Parser.ComandoAtribuicaoContext ctx) {
-        String nomeVar = ctx.identificador().getText(); // Pega o texto completo, ex: "pessoa.idade"
+        String nomeVar = ctx.identificador().getText();
 
-        // Verifica o tipo da expressão à direita do <-
         TabelaDeSimbolos.TipoLA tipoExpressao = SemanticoUtils.verificarTipo(escopos, ctx.expressao());
         boolean erro = false;
 
         if (tipoExpressao != TabelaDeSimbolos.TipoLA.INVALIDO) {
-            // Verifica o tipo da variável à esquerda do <- usando o Utils (suporta registros)
             TabelaDeSimbolos.TipoLA tipoVar = SemanticoUtils.verificarTipo(escopos, ctx.identificador());
 
             if (tipoVar != TabelaDeSimbolos.TipoLA.INVALIDO) {
@@ -173,11 +168,10 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
                     erro = true;
                 }
             } else {
-                // Se o lado esquerdo é inválido, não tentamos atribuir
                 erro = false;
             }
         } else {
-            erro = true; // Lado direito é uma expressão inválida (ex: literal + logico)
+            erro = true;
         }
 
         if (erro) {
@@ -205,10 +199,9 @@ public class AnalisadorSemantico extends GrammarT3BaseVisitor<Void> {
     private TabelaDeSimbolos.TipoLA determinarTipoDeString(String tipoStr) {
         // Verifica ponteiros primeiro
         if (tipoStr.startsWith("^")) {
-            return TabelaDeSimbolos.TipoLA.ENDERECO; // Ou crie um PONTEIRO_INTEIRO, PONTEIRO_REAL se o teste exigir precisão
+            return TabelaDeSimbolos.TipoLA.ENDERECO;
         }
 
-        // Depois verifica os tipos normais
         if (tipoStr.contains("literal")) return TabelaDeSimbolos.TipoLA.LITERAL;
         if (tipoStr.contains("inteiro")) return TabelaDeSimbolos.TipoLA.INTEIRO;
         if (tipoStr.contains("real")) return TabelaDeSimbolos.TipoLA.REAL;

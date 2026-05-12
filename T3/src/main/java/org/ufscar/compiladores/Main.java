@@ -28,29 +28,22 @@ public class Main {
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             GrammarT3Parser parser = new GrammarT3Parser(tokens);
 
-            // Opcional: Você pode manter o seu CustomErrorListener aqui se quiser pegar
-            // erros léxicos/sintáticos que possam ter sobrado, mas o foco do T3 é a semântica.
-            // parser.removeErrorListeners();
-            // parser.addErrorListener(new CustomErrorListener(pw));
-
-            // Limpa a lista de erros semânticos (útil para garantir que execuções sequenciais não acumulem lixo)
+            // Limpa a lista de erros semânticos
             SemanticoUtils.errosSemanticos.clear();
 
-            // 2. Executa o parser e gera a Árvore de Sintaxe Abstrata (AST) a partir da regra inicial
+            // 2. Executa o parser e gera a arvore
             GrammarT3Parser.ProgramaContext arvore = parser.programa();
 
-            // 3. Instancia e executa o Analisador Semântico (Visitor)
+            // 3. Instancia e executa o semantico
             AnalisadorSemantico semantico = new AnalisadorSemantico();
             semantico.visitPrograma(arvore);
 
-            // 4. Escreve os erros semânticos acumulados no arquivo de saída
+            // 4. Escreve os erros semanticos acumulados no arquivo de saída
             for (String erro : SemanticoUtils.errosSemanticos) {
                 pw.println(erro);
             }
 
-            // 5. Imprime a mensagem final exigida pela especificação
             pw.println("Fim da compilacao");
-
         } catch (IOException e) {
             e.printStackTrace();
         }

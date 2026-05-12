@@ -53,14 +53,13 @@ public class SemanticoUtils {
 
     public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT3Parser.ExpRelacionalContext ctx) {
         TabelaDeSimbolos.TipoLA ret = null;
-        if (ctx.OP_REL() != null) { // Tem operador relacional
+        if (ctx.OP_REL() != null) {
             TabelaDeSimbolos.TipoLA aux1 = verificarTipo(escopos, ctx.expAritmetica(0));
             TabelaDeSimbolos.TipoLA aux2 = verificarTipo(escopos, ctx.expAritmetica(1));
 
             boolean aux1Numeric = aux1 == TabelaDeSimbolos.TipoLA.INTEIRO || aux1 == TabelaDeSimbolos.TipoLA.REAL;
             boolean aux2Numeric = aux2 == TabelaDeSimbolos.TipoLA.INTEIRO || aux2 == TabelaDeSimbolos.TipoLA.REAL;
 
-            // Se ambos são numéricos ou do mesmo tipo (ex: literal == literal), a comparação relacional resulta em LÓGICO
             if ((aux1Numeric && aux2Numeric) || aux1 == aux2) {
                 ret = TabelaDeSimbolos.TipoLA.LOGICO;
             } else {
@@ -159,7 +158,7 @@ public class SemanticoUtils {
 
     public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT3Parser.ParcelaNaoUnitariaContext ctx) {
         if (ctx.identificador() != null) {
-            // Se possui '&', estamos pegando o endereço de memória de uma variável
+            // Se possui &
             return TabelaDeSimbolos.TipoLA.ENDERECO;
         }
         return TabelaDeSimbolos.TipoLA.LITERAL; // É uma CADEIA
@@ -173,7 +172,7 @@ public class SemanticoUtils {
             return TabelaDeSimbolos.TipoLA.INVALIDO;
         }
 
-        // Se o identificador tem partes separadas por ponto (ex: pessoa.idade)
+        // Se o identificador tem partes separadas por ponto
         if (ctx.IDENT().size() > 1) {
             TabelaDeSimbolos tabelaAtual = entrada.camposRegistro;
 
@@ -182,9 +181,9 @@ public class SemanticoUtils {
 
                 if (tabelaAtual != null && tabelaAtual.existe(parte)) {
                     entrada = tabelaAtual.verificar(parte);
-                    tabelaAtual = entrada.camposRegistro; // Desce mais um nível se for um registro dentro de registro
+                    tabelaAtual = entrada.camposRegistro;
                 } else {
-                    return TabelaDeSimbolos.TipoLA.INVALIDO; // Campo não existe no registro
+                    return TabelaDeSimbolos.TipoLA.INVALIDO;
                 }
             }
         }
