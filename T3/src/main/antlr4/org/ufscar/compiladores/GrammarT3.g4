@@ -7,7 +7,7 @@ programa: declaracoes 'algoritmo' corpo 'fim_algoritmo' EOF;
 declaracoes: (declaracaoLocal | declaracaoGlobal)*;
 
 declaracaoLocal: 'declare' variavel
-    | 'constante' IDENT ':' tipoBasico '=' valorConstante
+    | 'constante' IDENT ':' tipoBasico OP_REL valorConstante
     | 'tipo' IDENT ':' tipo;
 
 declaracaoGlobal: 'procedimento' IDENT '(' parametros? ')' corpo 'fim_procedimento'
@@ -60,7 +60,7 @@ expAritmetica: termo (OP_ARIT1 termo)*;
 termo: fator (OP_ARIT2 fator)*;
 fator: parcela (OP_ARIT3 parcela)*;
 
-paridade: '-';
+paridade: OP_ARIT1;
 
 parcela: paridade? parcelaUnitaria | parcelaNaoUnitaria;
 
