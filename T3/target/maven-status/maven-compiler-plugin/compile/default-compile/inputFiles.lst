@@ -1,0 +1,11 @@
+/mnt/data/Github/Compiladores_T1-T5/T3/src/main/java/org/ufscar/compiladores/AnalisadorSemantico.java
+/mnt/data/Github/Compiladores_T1-T5/T3/src/main/java/org/ufscar/compiladores/Escopos.java
+/mnt/data/Github/Compiladores_T1-T5/T3/src/main/java/org/ufscar/compiladores/Main.java
+/mnt/data/Github/Compiladores_T1-T5/T3/src/main/java/org/ufscar/compiladores/SemanticoUtils.java
+/mnt/data/Github/Compiladores_T1-T5/T3/src/main/java/org/ufscar/compiladores/TabelaDeSimbolos.java
+/mnt/data/Github/Compiladores_T1-T5/T3/target/generated-sources/antlr4/org/ufscar/compiladores/GrammarT3BaseListener.java
+/mnt/data/Github/Compiladores_T1-T5/T3/target/generated-sources/antlr4/org/ufscar/compiladores/GrammarT3BaseVisitor.java
+/mnt/data/Github/Compiladores_T1-T5/T3/target/generated-sources/antlr4/org/ufscar/compiladores/GrammarT3Lexer.java
+/mnt/data/Github/Compiladores_T1-T5/T3/target/generated-sources/antlr4/org/ufscar/compiladores/GrammarT3Listener.java
+/mnt/data/Github/Compiladores_T1-T5/T3/target/generated-sources/antlr4/org/ufscar/compiladores/GrammarT3Parser.java
+/mnt/data/Github/Compiladores_T1-T5/T3/target/generated-sources/antlr4/org/ufscar/compiladores/GrammarT3Visitor.java
