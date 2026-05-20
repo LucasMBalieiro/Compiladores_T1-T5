@@ -1,17 +1,51 @@
 package org.ufscar.compiladores;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import org.antlr.v4.runtime.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+/*
+        Analisador Semântico para o T3
+
+        Lê arquivo de input (args[0]) e escreve no output (args[1]).
+        Gera a árvore sintática e passa para o Visitor (AnalisadorSemantico)
+        fazer as verificações de escopo e tipagem.
+*/
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+        if (args.length != 2) {
+            System.out.println("Argumentos inválidos. Executar com <entrada> e <saida>");
+            return;
+        }
+
+        try (PrintWriter pw = new PrintWriter(args[1])) {
+
+            // 1. Configuração do Lexer e Parser
+            CharStream cs = CharStreams.fromFileName(args[0]);
+            GrammarT4Lexer lexer = new GrammarT4Lexer(cs);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            GrammarT4Parser parser = new GrammarT4Parser(tokens);
+
+            // Limpa a lista de erros semânticos
+            SemanticoUtils.errosSemanticos.clear();
+
+            // 2. Executa o parser e gera a arvore
+            GrammarT4Parser.ProgramaContext arvore = parser.programa();
+
+            // 3. Instancia e executa o semantico
+            AnalisadorSemantico semantico = new AnalisadorSemantico();
+            semantico.visitPrograma(arvore);
+
+            // 4. Escreve os erros semanticos acumulados no arquivo de saída
+            for (String erro : SemanticoUtils.errosSemanticos) {
+                pw.println(erro);
+            }
+
+            pw.println("Fim da compilacao");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
