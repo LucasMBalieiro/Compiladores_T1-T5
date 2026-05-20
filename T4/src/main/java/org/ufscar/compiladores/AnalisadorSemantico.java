@@ -4,6 +4,8 @@ public class AnalisadorSemantico extends GrammarT4BaseVisitor<Void> {
 
     Escopos escopos = new Escopos();
 
+    TabelaDeSimbolos.Categoria rotinaAtual = null;
+
     @Override
     public Void visitPrograma(GrammarT4Parser.ProgramaContext ctx) {
         return super.visitPrograma(ctx);
@@ -13,40 +15,51 @@ public class AnalisadorSemantico extends GrammarT4BaseVisitor<Void> {
     public Void visitDeclaracaoGlobal(GrammarT4Parser.DeclaracaoGlobalContext ctx) {
         String nomeRotina = ctx.IDENT().getText();
 
-        // 1. Registra a função/procedimento no escopo atual (Global)
+        TabelaDeSimbolos.Categoria cat = ctx.getText().startsWith("procedimento") ?
+                TabelaDeSimbolos.Categoria.PROCEDIMENTO : TabelaDeSimbolos.Categoria.FUNCAO;
+
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos rotinaVar = null;
+
+        // 1. Registra a funçao/procedimento no escopo atual
         if (escopos.escopoAtual().existe(nomeRotina)) {
             SemanticoUtils.adicionarErroSemantico(ctx.IDENT().getSymbol(), nomeRotina + " ja declarado anteriormente");
         } else {
-            TabelaDeSimbolos.Categoria cat = ctx.getText().startsWith("procedimento") ?
-                    TabelaDeSimbolos.Categoria.PROCEDIMENTO : TabelaDeSimbolos.Categoria.FUNCAO;
-
-            // Se for uma função, extraímos o tipo de retorno para validar o comando 'retorne' depois
             TabelaDeSimbolos.TipoLA tipoRetorno = TabelaDeSimbolos.TipoLA.INVALIDO;
             if (cat == TabelaDeSimbolos.Categoria.FUNCAO && ctx.tipoEstendido() != null) {
                 tipoRetorno = determinarTipoDeString(ctx.tipoEstendido().getText());
             }
-
-            escopos.escopoAtual().adicionar(nomeRotina, tipoRetorno, cat);
+            // Guarda a referencia da entrada
+            rotinaVar = escopos.escopoAtual().adicionar(nomeRotina, tipoRetorno, cat);
         }
 
-        // 2. Cria o NOVO escopo para a rotina
         escopos.criarNovoEscopo();
+        rotinaAtual = cat;
 
-        // 3. Verifica se existem parâmetros e os adiciona no escopo local
+        // Verifica se existem parâmetros e os adiciona no escopo local
         if (ctx.parametros() != null) {
             for (GrammarT4Parser.ParametroContext paramCtx : ctx.parametros().parametro()) {
-                // Pega o tipo declarado
                 String tipoStr = paramCtx.tipoEstendido().getText();
                 TabelaDeSimbolos.TipoLA tipoParam = determinarTipoDeString(tipoStr);
 
                 for (GrammarT4Parser.IdentificadorContext identCtx : paramCtx.identificador()) {
                     String nomeParam = identCtx.IDENT(0).getText();
 
-                    // Adiciona o paramwtro na tabela local
                     if (escopos.escopoAtual().existe(nomeParam)) {
                         SemanticoUtils.adicionarErroSemantico(identCtx.start, "identificador " + nomeParam + " ja declarado anteriormente");
                     } else {
-                        escopos.escopoAtual().adicionar(nomeParam, tipoParam, TabelaDeSimbolos.Categoria.VARIAVEL);
+                        TabelaDeSimbolos.EntradaTabelaDeSimbolos paramEntry = escopos.escopoAtual().adicionar(nomeParam, tipoParam, TabelaDeSimbolos.Categoria.VARIAVEL);
+
+                        // Recupera os campos de registro
+                        TabelaDeSimbolos.EntradaTabelaDeSimbolos tipoDeclarado = escopos.buscar(tipoStr);
+                        if (tipoDeclarado != null && tipoDeclarado.categoria == TabelaDeSimbolos.Categoria.TIPO) {
+                            paramEntry.nomeTipoCustomizado = tipoDeclarado.nome;
+                            paramEntry.camposRegistro = tipoDeclarado.camposRegistro;
+                        }
+
+                        // Guarda na assinatura
+                        if (rotinaVar != null) {
+                            rotinaVar.parametrosFormais.add(paramEntry);
+                        }
                     }
                 }
             }
@@ -55,8 +68,9 @@ public class AnalisadorSemantico extends GrammarT4BaseVisitor<Void> {
         // 4. Continua a visitação
         super.visitDeclaracaoGlobal(ctx);
 
-        // 5. Destroi o escopo local ao sair da rotina
+        // 5. Destroi o escopo local
         escopos.abandonarEscopo();
+        rotinaAtual = null;
 
         return null;
     }
@@ -102,9 +116,11 @@ public class AnalisadorSemantico extends GrammarT4BaseVisitor<Void> {
                         novaVar.camposRegistro = criarTabelaParaRegistro(ctx.variavel().tipo().registro());
                     }
                     else {
-                        // Variável de tipo básico
+                        // Variável de tipo basico ou ponteiro
                         TabelaDeSimbolos.TipoLA tipo = determinarTipoDeString(tipoSintatico);
-                        tabela.adicionar(nomeVar, tipo, TabelaDeSimbolos.Categoria.VARIAVEL);
+                        TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, tipo, TabelaDeSimbolos.Categoria.VARIAVEL);
+
+                        novaVar.nomeTipoCustomizado = tipoSintatico;
                     }
                 }
             }
@@ -132,54 +148,143 @@ public class AnalisadorSemantico extends GrammarT4BaseVisitor<Void> {
         return super.visitTipoBasicoIdentificador(ctx);
     }
 
-    // Ignora a checagem se o identificador estiver dentro de uma declaração de variável ou parâmetro.
     @Override
     public Void visitIdentificador(GrammarT4Parser.IdentificadorContext ctx) {
         if (!(ctx.getParent() instanceof GrammarT4Parser.VariavelContext) &&
                 !(ctx.getParent() instanceof GrammarT4Parser.ParametroContext)) {
 
-            String nomeVar = ctx.IDENT(0).getText();
+            String nomeCompleto = ctx.getText();
 
-            // Verifica se a variável foi declarada
-            if (escopos.buscar(nomeVar) == null) {
-                SemanticoUtils.adicionarErroSemantico(ctx.start, "identificador " + nomeVar + " nao declarado");
+            if (SemanticoUtils.verificarTipo(escopos, ctx) == TabelaDeSimbolos.TipoLA.INVALIDO) {
+                SemanticoUtils.adicionarErroSemantico(ctx.start, "identificador " + nomeCompleto + " nao declarado");
             }
         }
-
         return super.visitIdentificador(ctx);
     }
 
     @Override
     public Void visitComandoAtribuicao(GrammarT4Parser.ComandoAtribuicaoContext ctx) {
-        String nomeVar = ctx.identificador().getText();
+        String textoLadoEsquerdo = ctx.identificador().getText();
+        boolean isDesreferenciacao = ctx.getText().startsWith("^");
+        if (isDesreferenciacao) {
+            textoLadoEsquerdo = "^" + textoLadoEsquerdo;
+        }
 
         TabelaDeSimbolos.TipoLA tipoExpressao = SemanticoUtils.verificarTipo(escopos, ctx.expressao());
+        TabelaDeSimbolos.TipoLA tipoVar = SemanticoUtils.verificarTipo(escopos, ctx.identificador());
         boolean erro = false;
 
-        if (tipoExpressao != TabelaDeSimbolos.TipoLA.INVALIDO) {
-            TabelaDeSimbolos.TipoLA tipoVar = SemanticoUtils.verificarTipo(escopos, ctx.identificador());
+        if (isDesreferenciacao) {
+            tipoVar = obterTipoBasePonteiro(ctx.identificador());
+        }
 
-            if (tipoVar != TabelaDeSimbolos.TipoLA.INVALIDO) {
-                boolean expNumerica = (tipoExpressao == TabelaDeSimbolos.TipoLA.INTEIRO || tipoExpressao == TabelaDeSimbolos.TipoLA.REAL);
-                boolean varNumerica = (tipoVar == TabelaDeSimbolos.TipoLA.INTEIRO || tipoVar == TabelaDeSimbolos.TipoLA.REAL);
+        if (tipoVar == TabelaDeSimbolos.TipoLA.INVALIDO) {
+            // A variavel a esquerda n foi declarada
+            erro = false;
+        } else if (tipoExpressao == TabelaDeSimbolos.TipoLA.INVALIDO) {
+            // Variavel existe mas o lado direito é inválido
+            erro = true;
+        } else {
+            boolean expNumerica = (tipoExpressao == TabelaDeSimbolos.TipoLA.INTEIRO || tipoExpressao == TabelaDeSimbolos.TipoLA.REAL);
+            boolean varNumerica = (tipoVar == TabelaDeSimbolos.TipoLA.INTEIRO || tipoVar == TabelaDeSimbolos.TipoLA.REAL);
 
-                // Erro 4: Se não forem ambos numéricos e forem de tipos diferentes, é incompatível.
-                if (!(expNumerica && varNumerica) && tipoExpressao != tipoVar) {
+            if (expNumerica && varNumerica) {
+            } else if (tipoVar == TabelaDeSimbolos.TipoLA.REGISTRO && tipoExpressao == TabelaDeSimbolos.TipoLA.REGISTRO) {
+                String nomeTipoVar = obterNomeTipoCustomizado(ctx.identificador());
+                String nomeTipoExp = SemanticoUtils.obterNomeTipoCustomizado(escopos, ctx.expressao());
+                if (nomeTipoVar == null || !nomeTipoVar.equals(nomeTipoExp)) {
                     erro = true;
                 }
-            } else {
-                erro = false;
+            } else if (tipoExpressao != tipoVar) {
+                erro = true;
             }
-        } else {
-            erro = true;
         }
 
         if (erro) {
-            SemanticoUtils.adicionarErroSemantico(ctx.identificador().start, "atribuicao nao compativel para " + nomeVar);
+            SemanticoUtils.adicionarErroSemantico(ctx.identificador().start, "atribuicao nao compativel para " + textoLadoEsquerdo);
         }
-
         return super.visitComandoAtribuicao(ctx);
     }
+
+    @Override
+    public Void visitComandoChamada(GrammarT4Parser.ComandoChamadaContext ctx) {
+        String nomeRotina = ctx.IDENT().getText();
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos rotina = escopos.buscar(nomeRotina);
+
+        if (rotina != null) {
+            java.util.List<GrammarT4Parser.ExpressaoContext> expressoes = ctx.expressao();
+            if (expressoes.size() != rotina.parametrosFormais.size()) {
+                SemanticoUtils.adicionarErroSemantico(ctx.IDENT().getSymbol(), "incompatibilidade de parametros na chamada de " + nomeRotina);
+            } else {
+                for (int i = 0; i < expressoes.size(); i++) {
+                    TabelaDeSimbolos.TipoLA tipoArg = SemanticoUtils.verificarTipo(escopos, expressoes.get(i));
+                    TabelaDeSimbolos.EntradaTabelaDeSimbolos paramForm = rotina.parametrosFormais.get(i);
+                    TabelaDeSimbolos.TipoLA tipoParam = paramForm.tipo;
+
+                    boolean erroParam = false;
+                    if (tipoArg != tipoParam) erroParam = true;
+                    if (tipoArg == TabelaDeSimbolos.TipoLA.REGISTRO && tipoParam == TabelaDeSimbolos.TipoLA.REGISTRO) {
+                        String nomeTipoArg = SemanticoUtils.obterNomeTipoCustomizado(escopos, expressoes.get(i));
+                        if (paramForm.nomeTipoCustomizado == null || !paramForm.nomeTipoCustomizado.equals(nomeTipoArg)) {
+                            erroParam = true;
+                        } else {
+                            erroParam = false;
+                        }
+                    }
+
+                    if (erroParam && tipoArg != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                        SemanticoUtils.adicionarErroSemantico(ctx.IDENT().getSymbol(), "incompatibilidade de parametros na chamada de " + nomeRotina);
+                        break;
+                    }
+                }
+            }
+        }
+        return super.visitComandoChamada(ctx);
+    }
+
+    @Override
+    public Void visitComandoEscreva(GrammarT4Parser.ComandoEscrevaContext ctx) {
+        for (GrammarT4Parser.ExpressaoContext exp : ctx.expressao()) {
+            SemanticoUtils.verificarTipo(escopos, exp);
+        }
+        return super.visitComandoEscreva(ctx);
+    }
+
+    @Override
+    public Void visitComandoSe(GrammarT4Parser.ComandoSeContext ctx) {
+        SemanticoUtils.verificarTipo(escopos, ctx.expressao());
+        return super.visitComandoSe(ctx);
+    }
+
+    @Override
+    public Void visitComandoEnquanto(GrammarT4Parser.ComandoEnquantoContext ctx) {
+        SemanticoUtils.verificarTipo(escopos, ctx.expressao());
+        return super.visitComandoEnquanto(ctx);
+    }
+
+    private TabelaDeSimbolos.TipoLA determinarTipoDeString(String tipoStr) {
+        if (tipoStr.startsWith("^")) return TabelaDeSimbolos.TipoLA.ENDERECO;
+        if (tipoStr.contains("literal")) return TabelaDeSimbolos.TipoLA.LITERAL;
+        if (tipoStr.contains("inteiro")) return TabelaDeSimbolos.TipoLA.INTEIRO;
+        if (tipoStr.contains("real")) return TabelaDeSimbolos.TipoLA.REAL;
+        if (tipoStr.contains("logico")) return TabelaDeSimbolos.TipoLA.LOGICO;
+
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos entrada = escopos.buscar(tipoStr);
+        if (entrada != null && entrada.categoria == TabelaDeSimbolos.Categoria.TIPO) {
+            return TabelaDeSimbolos.TipoLA.REGISTRO;
+        }
+        return TabelaDeSimbolos.TipoLA.INVALIDO;
+    }
+
+    @Override
+    public Void visitComandoRetorne(GrammarT4Parser.ComandoRetorneContext ctx) {
+        if (rotinaAtual != TabelaDeSimbolos.Categoria.FUNCAO) {
+            SemanticoUtils.adicionarErroSemantico(ctx.start, "comando retorne nao permitido nesse escopo");
+        }
+
+        return super.visitComandoRetorne(ctx);
+    }
+
 
     private TabelaDeSimbolos criarTabelaParaRegistro(GrammarT4Parser.RegistroContext ctx) {
         TabelaDeSimbolos tabelaCampos = new TabelaDeSimbolos();
@@ -196,17 +301,25 @@ public class AnalisadorSemantico extends GrammarT4BaseVisitor<Void> {
         return tabelaCampos;
     }
 
-    private TabelaDeSimbolos.TipoLA determinarTipoDeString(String tipoStr) {
-        // Verifica ponteiros primeiro
-        if (tipoStr.startsWith("^")) {
-            return TabelaDeSimbolos.TipoLA.ENDERECO;
+
+    private String obterNomeTipoCustomizado(GrammarT4Parser.IdentificadorContext ctx) {
+        String nomeVar = ctx.IDENT(0).getText();
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos entrada = escopos.buscar(nomeVar);
+        if (entrada != null) {
+            return entrada.nomeTipoCustomizado;
         }
+        return null;
+    }
 
-        if (tipoStr.contains("literal")) return TabelaDeSimbolos.TipoLA.LITERAL;
-        if (tipoStr.contains("inteiro")) return TabelaDeSimbolos.TipoLA.INTEIRO;
-        if (tipoStr.contains("real")) return TabelaDeSimbolos.TipoLA.REAL;
-        if (tipoStr.contains("logico")) return TabelaDeSimbolos.TipoLA.LOGICO;
-
+    private TabelaDeSimbolos.TipoLA obterTipoBasePonteiro(GrammarT4Parser.IdentificadorContext ctx) {
+        String nomeVar = ctx.IDENT(0).getText();
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos entrada = escopos.buscar(nomeVar);
+        if (entrada != null && entrada.nomeTipoCustomizado != null) {
+            if (entrada.nomeTipoCustomizado.contains("inteiro")) return TabelaDeSimbolos.TipoLA.INTEIRO;
+            if (entrada.nomeTipoCustomizado.contains("real")) return TabelaDeSimbolos.TipoLA.REAL;
+            if (entrada.nomeTipoCustomizado.contains("logico")) return TabelaDeSimbolos.TipoLA.LOGICO;
+            if (entrada.nomeTipoCustomizado.contains("literal")) return TabelaDeSimbolos.TipoLA.LITERAL;
+        }
         return TabelaDeSimbolos.TipoLA.INVALIDO;
     }
 }

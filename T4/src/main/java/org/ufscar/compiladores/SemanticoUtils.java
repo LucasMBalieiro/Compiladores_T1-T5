@@ -143,15 +143,45 @@ public class SemanticoUtils {
         if (ctx.identificador() != null) return verificarTipo(escopos, ctx.identificador());
 
         if (ctx.IDENT() != null) {
-            // Chamada de função
             String nomeFuncao = ctx.IDENT().getText();
             TabelaDeSimbolos.EntradaTabelaDeSimbolos func = escopos.buscar(nomeFuncao);
+
             if (func != null && func.categoria == TabelaDeSimbolos.Categoria.FUNCAO) {
-                return func.tipo;
+                java.util.List<GrammarT4Parser.ExpressaoContext> expressoes = ctx.expressao();
+
+                // Incompatibilidade de quantidade ou tipo de parametros
+                if (expressoes.size() != func.parametrosFormais.size()) {
+                    adicionarErroSemantico(ctx.IDENT().getSymbol(), "incompatibilidade de parametros na chamada de " + nomeFuncao);
+                } else {
+                    for (int i = 0; i < expressoes.size(); i++) {
+                        TabelaDeSimbolos.TipoLA tipoArg = verificarTipo(escopos, expressoes.get(i));
+                        TabelaDeSimbolos.EntradaTabelaDeSimbolos paramForm = func.parametrosFormais.get(i);
+                        TabelaDeSimbolos.TipoLA tipoParam = paramForm.tipo;
+
+                        boolean erroParam = false;
+
+                        if (tipoArg != tipoParam) erroParam = true;
+
+                        if (tipoArg == TabelaDeSimbolos.TipoLA.REGISTRO && tipoParam == TabelaDeSimbolos.TipoLA.REGISTRO) {
+                            String nomeTipoArg = obterNomeTipoCustomizado(escopos, expressoes.get(i));
+                            if (paramForm.nomeTipoCustomizado == null || !paramForm.nomeTipoCustomizado.equals(nomeTipoArg)) {
+                                erroParam = true;
+                            } else {
+                                erroParam = false; // Nomes customizados batem
+                            }
+                        }
+
+                        // Ignora se o argumento for INVALIDO para não duplicar o erro
+                        if (erroParam && tipoArg != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                            adicionarErroSemantico(ctx.IDENT().getSymbol(), "incompatibilidade de parametros na chamada de " + nomeFuncao);
+                            break;
+                        }
+                    }
+                }
+                return func.tipo; // Retorna o tipo de retorno da função para o calculo da expressão
             }
             return TabelaDeSimbolos.TipoLA.INVALIDO;
         } else {
-            // Expressão entre parênteses
             return verificarTipo(escopos, ctx.expressao(0));
         }
     }
@@ -189,5 +219,26 @@ public class SemanticoUtils {
         }
 
         return entrada.tipo;
+    }
+
+    public static String obterNomeTipoCustomizado(Escopos escopos, GrammarT4Parser.ExpressaoContext ctx) {
+        String nomeVar = ctx.getText();
+
+        nomeVar = nomeVar.replace("&", "").replace("^", "");
+
+        // CORREÇÃO DO TESTE 6
+        if (nomeVar.contains("[")) {
+            nomeVar = nomeVar.split("\\[")[0];
+        }
+
+        if (nomeVar.contains(".")) {
+            nomeVar = nomeVar.split("\\.")[0];
+        }
+
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos entrada = escopos.buscar(nomeVar);
+        if (entrada != null) {
+            return entrada.nomeTipoCustomizado;
+        }
+        return null;
     }
 }

@@ -16,6 +16,9 @@ public class TabelaDeSimbolos {
         public TabelaDeSimbolos camposRegistro;
         public String nomeTipoCustomizado;
 
+        // Lista para armazenar os parametros
+        public java.util.List<EntradaTabelaDeSimbolos> parametrosFormais = new java.util.ArrayList<>();
+
         public EntradaTabelaDeSimbolos() {
             this.camposRegistro = new TabelaDeSimbolos(); // Já inicializa a sub-tabela
         }
