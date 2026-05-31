@@ -195,12 +195,6 @@ public interface GrammarT2Visitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNumero(GrammarT2Parser.NumeroContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GrammarT2Parser#expAritmetica}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link GrammarT2Parser#termo}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -236,6 +230,12 @@ public interface GrammarT2Visitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitParcelaNaoUnitaria(GrammarT2Parser.ParcelaNaoUnitariaContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarT2Parser#expAritmetica}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GrammarT2Parser#expRelacional}.
 	 * @param ctx the parse tree

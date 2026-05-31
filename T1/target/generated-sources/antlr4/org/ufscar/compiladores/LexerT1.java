@@ -17,7 +17,7 @@ public class LexerT1 extends Lexer {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		PALAVRA_CHAVE=1, IDENT=2, NUMINT=3, NUMREAL=4, CADEIA=5, COMENTARIO=6, 
+		PALAVRA_CHAVE=1, IDENT=2, NUM_INT=3, NUM_REAL=4, CADEIA=5, COMENTARIO=6, 
 		OP_REL=7, OP_ARIT=8, OP_ATR=9, OP_ACESSO=10, DELIM=11, VIRGULA=12, DOIS_PONTOS=13, 
 		ABRE_PAR=14, FECHA_PAR=15, ABRE_COL=16, FECHA_COL=17, WS=18, CadeioNaoFechada=19, 
 		ComentarioNaoFechado=20, Erro=21;
@@ -31,7 +31,7 @@ public class LexerT1 extends Lexer {
 
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"PALAVRA_CHAVE", "IDENT", "NUMINT", "NUMREAL", "CADEIA", "COMENTARIO", 
+			"PALAVRA_CHAVE", "IDENT", "NUM_INT", "NUM_REAL", "CADEIA", "COMENTARIO", 
 			"OP_REL", "OP_ARIT", "OP_ATR", "OP_ACESSO", "DELIM", "VIRGULA", "DOIS_PONTOS", 
 			"ABRE_PAR", "FECHA_PAR", "ABRE_COL", "FECHA_COL", "WS", "CadeioNaoFechada", 
 			"ComentarioNaoFechado", "Erro"
@@ -48,7 +48,7 @@ public class LexerT1 extends Lexer {
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, "PALAVRA_CHAVE", "IDENT", "NUMINT", "NUMREAL", "CADEIA", "COMENTARIO", 
+			null, "PALAVRA_CHAVE", "IDENT", "NUM_INT", "NUM_REAL", "CADEIA", "COMENTARIO", 
 			"OP_REL", "OP_ARIT", "OP_ATR", "OP_ACESSO", "DELIM", "VIRGULA", "DOIS_PONTOS", 
 			"ABRE_PAR", "FECHA_PAR", "ABRE_COL", "FECHA_COL", "WS", "CadeioNaoFechada", 
 			"ComentarioNaoFechado", "Erro"

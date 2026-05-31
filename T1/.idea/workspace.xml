@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e947633c-0f6c-4c3f-9a29-0e180cb62542" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../T2/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../T2/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../T2/src/main/java/org/ufscar/compiladores/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/../T2/src/main/java/org/ufscar/compiladores/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/antlr4/org/ufscar/compiladores/LexerT1.g4" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/antlr4/org/ufscar/compiladores/LexerT1.g4" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/T1-1.0-SNAPSHOT-jar-with-dependencies.jar" beforeDir="false" afterPath="$PROJECT_DIR$/target/T1-1.0-SNAPSHOT-jar-with-dependencies.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/T1-1.0-SNAPSHOT.jar" beforeDir="false" afterPath="$PROJECT_DIR$/target/T1-1.0-SNAPSHOT.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/org/ufscar/compiladores/LexerT1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/org/ufscar/compiladores/LexerT1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/antlr4/LexerT1.tokens" beforeDir="false" afterPath="$PROJECT_DIR$/target/generated-sources/antlr4/LexerT1.tokens" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/antlr4/org/ufscar/compiladores/LexerT1.interp" beforeDir="false" afterPath="$PROJECT_DIR$/target/generated-sources/antlr4/org/ufscar/compiladores/LexerT1.interp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/antlr4/org/ufscar/compiladores/LexerT1.java" beforeDir="false" afterPath="$PROJECT_DIR$/target/generated-sources/antlr4/org/ufscar/compiladores/LexerT1.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

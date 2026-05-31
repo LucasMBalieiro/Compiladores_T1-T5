@@ -365,18 +365,6 @@ public class GrammarT2BaseListener implements GrammarT2Listener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterTermo(GrammarT2Parser.TermoContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -444,6 +432,18 @@ public class GrammarT2BaseListener implements GrammarT2Listener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitParcelaNaoUnitaria(GrammarT2Parser.ParcelaNaoUnitariaContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

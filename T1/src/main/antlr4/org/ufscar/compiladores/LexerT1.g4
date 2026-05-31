@@ -12,8 +12,8 @@ PALAVRA_CHAVE: 'algoritmo'| 'fim_algoritmo' | 'declare' | 'leia' | 'escreva' |
 IDENT: ('a'..'z' | 'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9' | '_')*;
 
 //Numeros
-NUMINT: ('0'..'9')+;
-NUMREAL: ('0'..'9')+ '.' ('0'..'9')+;
+NUM_INT: ('0'..'9')+;
+NUM_REAL: ('0'..'9')+ '.' ('0'..'9')+;
 
 //Strings e comentarios devem iniciar e fechar na mesma linha
 CADEIA: '"' ~('"' | '\r' | '\n')* '"';

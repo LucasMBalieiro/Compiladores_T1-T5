@@ -318,16 +318,6 @@ public interface GrammarT2Listener extends ParseTreeListener {
 	 */
 	void exitNumero(GrammarT2Parser.NumeroContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link GrammarT2Parser#expAritmetica}.
-	 * @param ctx the parse tree
-	 */
-	void enterExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link GrammarT2Parser#expAritmetica}.
-	 * @param ctx the parse tree
-	 */
-	void exitExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link GrammarT2Parser#termo}.
 	 * @param ctx the parse tree
 	 */
@@ -387,6 +377,16 @@ public interface GrammarT2Listener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitParcelaNaoUnitaria(GrammarT2Parser.ParcelaNaoUnitariaContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GrammarT2Parser#expAritmetica}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GrammarT2Parser#expAritmetica}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpAritmetica(GrammarT2Parser.ExpAritmeticaContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link GrammarT2Parser#expRelacional}.
 	 * @param ctx the parse tree

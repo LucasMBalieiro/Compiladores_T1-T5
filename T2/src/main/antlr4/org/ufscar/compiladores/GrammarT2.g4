@@ -27,7 +27,7 @@ tipoBasicoIdentificador: tipoBasico | IDENT;
 
 tipoEstendido: '^'? tipoBasicoIdentificador;
 
-valorConstante: CADEIA | NUMINT | NUMREAL | 'verdadeiro' | 'falso';
+valorConstante: CADEIA | NUM_INT | NUM_REAL | 'verdadeiro' | 'falso';
 
 registro: 'registro' variavel* 'fim_registro';
 
@@ -54,9 +54,8 @@ itemSelecao: constantes ':' comando*;
 
 constantes: numero (',' numero)*;
 
-numero: paridade? NUMINT ( '..' paridade? NUMINT)?;
+numero: paridade? NUM_INT ( '..' paridade? NUM_INT)?;
 
-expAritmetica: termo (OP_ARIT1 termo)*;
 termo: fator (OP_ARIT2 fator)*;
 fator: parcela (OP_ARIT3 parcela)*;
 
@@ -66,13 +65,15 @@ parcela: paridade? parcelaUnitaria | parcelaNaoUnitaria;
 
 parcelaUnitaria: '^'? identificador
     | IDENT '(' (expressao (',' expressao)*)? ')'
-    | NUMINT
-    | NUMREAL
+    | NUM_INT
+    | NUM_REAL
     | '(' expressao ')';
 
 parcelaNaoUnitaria: '&' identificador | CADEIA;
 
-expRelacional: expAritmetica (OP_REL expAritmetica)?;
+expAritmetica: termo ((OP_ARIT1 | '-') termo)*;
+
+expRelacional: expAritmetica ((OP_REL | '=') expAritmetica)?;
 
 expressao: termoLogico (OP_BOOL_OU termoLogico)*;
 termoLogico: fatorLogico (OP_BOOL_E fatorLogico)*;
@@ -83,10 +84,11 @@ parcelaLogica: 'verdadeiro' | 'falso' | expRelacional;
 // ---- LEXICO --- //
 
 //Operadores
-OP_ARIT1: '+' | '-';
+OP_ARIT1: '+';
 OP_ARIT2: '*' | '/';
 OP_ARIT3: '%';
-OP_REL: '>' | '>=' | '<' | '<=' | '<>' | '=';
+
+OP_REL: '>' | '>=' | '<' | '<=' | '<>';
 OP_BOOL_OU: 'ou';
 OP_BOOL_E: 'e';
 
@@ -94,8 +96,8 @@ OP_BOOL_E: 'e';
 IDENT: ('a'..'z' | 'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9' | '_')*;
 
 //Numeros
-NUMINT: ('0'..'9')+;
-NUMREAL: ('0'..'9')+ '.' ('0'..'9')+;
+NUM_INT: ('0'..'9')+;
+NUM_REAL: ('0'..'9')+ '.' ('0'..'9')+;
 
 //Strings e comentarios devem iniciar e fechar na mesma linha
 CADEIA: '"' ~('"' | '\r' | '\n')* '"';
