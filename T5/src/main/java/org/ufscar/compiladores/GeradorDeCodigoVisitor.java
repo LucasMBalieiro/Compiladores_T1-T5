@@ -257,7 +257,8 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
                 } else if (tipo == TabelaDeSimbolos.TipoLA.REAL) {
                     codigoC.append("    scanf(\"%f\", &").append(nomeVar).append(");\n");
                 } else if (tipo == TabelaDeSimbolos.TipoLA.LITERAL) {
-                    codigoC.append("    gets(").append(nomeVar).append(");\n");
+                    codigoC.append("    fgets(").append(nomeVar).append(", 80, stdin);\n");
+                    codigoC.append("    ").append(nomeVar).append("[strcspn(").append(nomeVar).append(", \"\\n\")] = 0;\n");
                 }
             }
         }
