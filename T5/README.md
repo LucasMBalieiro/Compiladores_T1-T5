@@ -6,11 +6,11 @@
 
 ## Sobre o projeto
 
-Consiste em um **Gerador de código + Analisador Semântico** construído utilizando **Java** e **ANTLR4**.
+Consiste em um **Compilador completo** (Analisador Léxico, Sintático, Semântico e Gerador de Código) construído utilizando Java e ANTLR4. 
 
-O programa recebe como entrada um arquivo de código-fonte escrito na linguagem LA (Linguagem Algorítmica)
- e realiza a análise sintática e léxica sobre o programa, retornando mensagens de erro 
-caso um seja encontrado no meio da execução.
+O programa recebe como entrada um arquivo de código-fonte escrito na linguagem LA, 
+realiza todas as etapas de validação estrutural e de tipagem, retornando mensagens de erro. 
+Caso o código seja válido, ele é traduzido para a linguagem C.
 
 ## Pré-requisitos
 * **Java Development Kit (JDK):** Versão 21 (ou compatível configurada no `pom.xml`)
