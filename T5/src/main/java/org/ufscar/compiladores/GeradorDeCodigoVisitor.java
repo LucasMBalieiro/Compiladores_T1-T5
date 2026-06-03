@@ -11,15 +11,13 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
         codigoC.append("#include <stdlib.h>\n");
         codigoC.append("#include <string.h>\n\n");
 
-        // 1. Visita a área de declarações globais e constantes (Antes do main!)
         if (ctx.declaracoes() != null) {
             visit(ctx.declaracoes());
-            codigoC.append("\n"); // Pula uma linha extra pra ficar organizado
+            codigoC.append("\n");
         }
 
         codigoC.append("int main() {\n");
 
-        // 2. Visita o corpo do algoritmo (onde ficam os comandos)
         if (ctx.corpo() != null) {
             visit(ctx.corpo());
         }
@@ -35,7 +33,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
         String nomeRotina = ctx.IDENT().getText();
         boolean isFuncao = ctx.getText().startsWith("funcao");
 
-        // 1. Determina o tipo de retorno (procedimento é sempre void)
         String tipoRetornoC = "void";
         if (isFuncao) {
             String tipoLA = ctx.tipoEstendido().getText();
@@ -49,10 +46,8 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
             if (isPonteiro) tipoRetornoC += "*";
         }
 
-        // 2. Imprime a assinatura da função: ex: void proc_imprime(
         codigoC.append(tipoRetornoC).append(" ").append(nomeRotina).append("(");
 
-        // 3. Traduz os parâmetros e os adiciona na Tabela de Símbolos
         if (ctx.parametros() != null) {
             boolean primeiroParametro = true;
             for (GrammarT5Parser.ParametroContext paramCtx : ctx.parametros().parametro()) {
@@ -73,7 +68,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
                 if (isPonteiro) tipoCParam += "*";
 
-                // Trata passagem por referência (var) do LA, que vira ponteiro no C
                 if (paramCtx.getText().startsWith("var") && !tipoLAParam.equals("literal")) {
                     tipoCParam += "*";
                 }
@@ -84,8 +78,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
                     String nomeParam = idCtx.getText();
                     codigoC.append(tipoCParam).append(" ").append(nomeParam);
 
-                    // SALVA O PARÂMETRO NA TABELA!
-                    // É isso que vai fazer o printf lá embaixo saber que 'mensagem' é um %s
                     tabela.adicionar(nomeParam, tipoEnumParam, TabelaDeSimbolos.Categoria.VARIAVEL);
 
                     primeiroParametro = false;
@@ -95,19 +87,17 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
         codigoC.append(") {\n");
 
-        // 4. Visita o corpo do procedimento (comandos e variáveis locais)
         if (ctx.corpo() != null) {
             visit(ctx.corpo());
         }
 
-        codigoC.append("}\n\n"); // Fecha a chave da função global
+        codigoC.append("}\n\n");
         return null;
     }
 
     @Override
     public Void visitDeclaracaoLocal(GrammarT5Parser.DeclaracaoLocalContext ctx) {
         if (ctx.variavel() != null) {
-            // --- REGRA DE REGISTRO (STRUCT) ---
             if (ctx.variavel().tipo().registro() != null) {
                 for (GrammarT5Parser.IdentificadorContext identCtx : ctx.variavel().identificador()) {
                     String nomeVar = identCtx.IDENT(0).getText();
@@ -125,7 +115,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
                         boolean isPonteiroInterno = tipoLAInterno.startsWith("^");
                         if (isPonteiroInterno) tipoLAInterno = tipoLAInterno.substring(1);
 
-                        // Trata 'logico' como 'int' no C
                         if (tipoLAInterno.equals("inteiro") || tipoLAInterno.equals("logico")) {
                             tipoCInterno = "int"; tipoEnumInterno = TabelaDeSimbolos.TipoLA.INTEIRO;
                         } else if (tipoLAInterno.equals("real")) {
@@ -152,7 +141,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
                     codigoC.append("    } ").append(nomeVar).append(dimensao).append(";\n");
                 }
             }
-            // --- REGRA DE VARIÁVEL COMUM ---
             else {
                 String tipoLA = ctx.variavel().tipo().getText();
                 String tipoC = "";
@@ -171,7 +159,7 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
                 TabelaDeSimbolos.EntradaTabelaDeSimbolos tipoCustomizado = null;
 
-                // Se não casou com nenhum tipo básico, é um tipo customizado (ex: t_reg)
+                // tipo customizado
                 if (tipoC.isEmpty()) {
                     tipoC = tipoLA;
                     tipoCustomizado = tabela.verificar(tipoLA);
@@ -188,7 +176,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
                     TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, tipoEnum, TabelaDeSimbolos.Categoria.VARIAVEL);
 
-                    // Se for um tipo customizado de registro, precisamos trazer os campos dele para podermos dar strcpy depois
                     if (tipoEnum == TabelaDeSimbolos.TipoLA.REGISTRO && tipoCustomizado != null) {
                         novaVar.camposRegistro = tipoCustomizado.camposRegistro;
                     }
@@ -201,7 +188,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
                 }
             }
         }
-        // --- REGRA DE CONSTANTE (#define) ---
         else if (ctx.tipoBasico() != null && ctx.valorConstante() != null) {
             String nomeConstante = ctx.IDENT().getText();
             String valor = ctx.valorConstante().getText();
@@ -215,7 +201,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
             tabela.adicionar(nomeConstante, tipoEnum, TabelaDeSimbolos.Categoria.CONSTANTE);
         }
-        // --- REGRA DE TIPO CUSTOMIZADO (typedef struct) ---
         else if (ctx.tipo() != null && ctx.IDENT() != null && ctx.getText().startsWith("tipo")) {
             String nomeTipo = ctx.IDENT().getText();
             codigoC.append("    typedef struct {\n");
@@ -292,7 +277,8 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
                 if (tipoVisitor.hasLiteral) {
                     codigoC.append("    printf(\"%s\", ").append(expText).append(");\n");
-                } else if (tipoVisitor.hasReal || expText.contains(".")) {
+                }
+                else if (tipoVisitor.hasReal || expText.matches(".*\\d+\\.\\d+.*")) {
                     codigoC.append("    printf(\"%f\", ").append(expText).append(");\n");
                 } else {
                     codigoC.append("    printf(\"%d\", ").append(expText).append(");\n");
@@ -397,13 +383,9 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
 
         codigoC.append("    do {\n");
 
-        for (GrammarT5Parser.ComandoContext cmd : ctx.comando()) {
-            visit(cmd);
-        }
+        ctx.comando().forEach(this::visit);
 
-        // A inversão é ABSOLUTAMENTE OBRIGATÓRIA aqui!
-        // Não podemos tentar "limpar" a string, senão quebramos a lógica do C.
-        codigoC.append("    } while (!(").append(expressao).append("));\n");
+        codigoC.append("    } while (").append(expressao).append(");\n");
         return null;
     }
 
@@ -484,7 +466,6 @@ public class GeradorDeCodigoVisitor extends GrammarT5BaseVisitor<Void> {
     }
 
     private TabelaDeSimbolos.TipoLA verificarTipo(String nomeVar) {
-        // Limpa chaves de vetores/matrizes para a busca funcionar (ex: vetor[i] vira vetor)
         String nomeBusca = nomeVar.replaceAll("\\[.*?\\]", "");
         String[] partes = nomeBusca.split("\\.");
 

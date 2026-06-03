@@ -65,10 +65,8 @@ public class AnalisadorSemantico extends GrammarT5BaseVisitor<Void> {
             }
         }
 
-        // 4. Continua a visitação
         super.visitDeclaracaoGlobal(ctx);
 
-        // 5. Destroi o escopo local
         escopos.abandonarEscopo();
         rotinaAtual = null;
 
@@ -79,7 +77,7 @@ public class AnalisadorSemantico extends GrammarT5BaseVisitor<Void> {
     public Void visitDeclaracaoLocal(GrammarT5Parser.DeclaracaoLocalContext ctx) {
         TabelaDeSimbolos tabela = escopos.escopoAtual();
 
-        if (ctx.tipo() != null) { // É uma declaração de tipo customizado
+        if (ctx.tipo() != null) { // declaração de tipo customizado
             String nomeTipo = ctx.IDENT().getText();
 
             if (tabela.existe(nomeTipo)) {
@@ -87,7 +85,7 @@ public class AnalisadorSemantico extends GrammarT5BaseVisitor<Void> {
             } else {
                 TabelaDeSimbolos.EntradaTabelaDeSimbolos entradaTipo = tabela.adicionar(nomeTipo, TabelaDeSimbolos.TipoLA.REGISTRO, TabelaDeSimbolos.Categoria.TIPO);
 
-                // Se o tipo sendo criado for um registro
+                // Se o tipo for um registro
                 if (ctx.tipo().registro() != null) {
                     entradaTipo.camposRegistro = criarTabelaParaRegistro(ctx.tipo().registro());
                 }
@@ -104,19 +102,18 @@ public class AnalisadorSemantico extends GrammarT5BaseVisitor<Void> {
                 } else {
                     TabelaDeSimbolos.EntradaTabelaDeSimbolos tipoDeclarado = escopos.buscar(tipoSintatico);
 
-                    // Se a variável é de um tipo customizado que já existe
+                    // Se for um tipo custom que ja existe
                     if (tipoDeclarado != null && tipoDeclarado.categoria == TabelaDeSimbolos.Categoria.TIPO) {
                         TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, TabelaDeSimbolos.TipoLA.REGISTRO, TabelaDeSimbolos.Categoria.VARIAVEL);
                         novaVar.nomeTipoCustomizado = tipoDeclarado.nome;
                         novaVar.camposRegistro = tipoDeclarado.camposRegistro;
                     }
                     else if (ctx.variavel().tipo().registro() != null) {
-                        // É um registro criado "in-line"
                         TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, TabelaDeSimbolos.TipoLA.REGISTRO, TabelaDeSimbolos.Categoria.VARIAVEL);
                         novaVar.camposRegistro = criarTabelaParaRegistro(ctx.variavel().tipo().registro());
                     }
                     else {
-                        // Variável de tipo basico ou ponteiro
+                        // tipo basico ou ponteiro
                         TabelaDeSimbolos.TipoLA tipo = determinarTipoDeString(tipoSintatico);
                         TabelaDeSimbolos.EntradaTabelaDeSimbolos novaVar = tabela.adicionar(nomeVar, tipo, TabelaDeSimbolos.Categoria.VARIAVEL);
 
@@ -125,7 +122,7 @@ public class AnalisadorSemantico extends GrammarT5BaseVisitor<Void> {
                 }
             }
         }
-        else if (ctx.tipoBasico() != null) { // É uma 'constante'
+        else if (ctx.tipoBasico() != null) { // constante
             String nomeConst = ctx.IDENT().getText();
             if (tabela.existe(nomeConst)) {
                 SemanticoUtils.adicionarErroSemantico(ctx.IDENT().getSymbol(), "constante " + nomeConst + " ja declarado anteriormente");
