@@ -1,4 +1,4 @@
-# Analisador Semântico (parte 2) - Compiladores (T4)
+# Gerador de código - Compiladores (T5)
 
 ## Aluno / RA
 
@@ -6,7 +6,7 @@
 
 ## Sobre o projeto
 
-Consiste em um **Analisador Semântico** construído utilizando **Java** e **ANTLR4**.
+Consiste em um **Gerador de código + Analisador Semântico** construído utilizando **Java** e **ANTLR4**.
 
 O programa recebe como entrada um arquivo de código-fonte escrito na linguagem LA (Linguagem Algorítmica)
  e realiza a análise sintática e léxica sobre o programa, retornando mensagens de erro 

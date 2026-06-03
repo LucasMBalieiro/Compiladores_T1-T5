@@ -40,8 +40,8 @@ corpo: declaracaoLocal* comando*;
 
 comando: 'leia' '(' '^'? identificador (',' '^'? identificador)* ')'                        # ComandoLeia
        | 'escreva' '(' expressao (',' expressao)* ')'                                       # ComandoEscreva
-       | 'se' expressao 'entao' comando* ('senao' comando*)? 'fim_se'                       # ComandoSe
-       | 'caso' expAritmetica 'seja' itemSelecao* ('senao' comando*)? 'fim_caso'            # ComandoCaso
+       | 'se' expressao 'entao' cmdEntao+=comando* ('senao' cmdSenao+=comando*)? 'fim_se'   # ComandoSe
+       | 'caso' expAritmetica 'seja' itemSelecao* ('senao' cmdSenao+=comando*)? 'fim_caso'  # ComandoCaso
        | 'para' IDENT '<-' expAritmetica 'ate' expAritmetica 'faca' comando* 'fim_para'     # ComandoPara
        | 'enquanto' expressao 'faca' comando* 'fim_enquanto'                                # ComandoEnquanto
        | 'faca' comando* 'ate' expressao                                                    # ComandoFaca

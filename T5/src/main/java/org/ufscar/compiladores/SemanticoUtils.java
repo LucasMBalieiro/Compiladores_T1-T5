@@ -1,0 +1,244 @@
+package org.ufscar.compiladores; // Lembre-se de ajustar o package para o do seu projeto
+
+import org.antlr.v4.runtime.Token;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SemanticoUtils {
+    public static List<String> errosSemanticos = new ArrayList<>();
+
+    public static void adicionarErroSemantico(Token t, String mensagem) {
+        int linha = t.getLine();
+        errosSemanticos.add(String.format("Linha %d: %s", linha, mensagem));
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ExpressaoContext ctx) {
+        TabelaDeSimbolos.TipoLA ret = null;
+        for (var tl : ctx.termoLogico()) {
+            TabelaDeSimbolos.TipoLA aux = verificarTipo(escopos, tl);
+            if (ret == null) {
+                ret = aux;
+            } else if (ret != aux && aux != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                ret = TabelaDeSimbolos.TipoLA.INVALIDO;
+            }
+        }
+        return ret;
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.TermoLogicoContext ctx) {
+        TabelaDeSimbolos.TipoLA ret = null;
+        for (var fl : ctx.fatorLogico()) {
+            TabelaDeSimbolos.TipoLA aux = verificarTipo(escopos, fl);
+            if (ret == null) {
+                ret = aux;
+            } else if (ret != aux && aux != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                ret = TabelaDeSimbolos.TipoLA.INVALIDO;
+            }
+        }
+        return ret;
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.FatorLogicoContext ctx) {
+        return verificarTipo(escopos, ctx.parcelaLogica());
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ParcelaLogicaContext ctx) {
+        if (ctx.expRelacional() != null) {
+            return verificarTipo(escopos, ctx.expRelacional());
+        } else {
+            // Se não tem expressão relacional, é 'verdadeiro' ou 'falso'
+            return TabelaDeSimbolos.TipoLA.LOGICO;
+        }
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ExpRelacionalContext ctx) {
+        TabelaDeSimbolos.TipoLA ret = null;
+        if (ctx.OP_REL() != null) {
+            TabelaDeSimbolos.TipoLA aux1 = verificarTipo(escopos, ctx.expAritmetica(0));
+            TabelaDeSimbolos.TipoLA aux2 = verificarTipo(escopos, ctx.expAritmetica(1));
+
+            boolean aux1Numeric = aux1 == TabelaDeSimbolos.TipoLA.INTEIRO || aux1 == TabelaDeSimbolos.TipoLA.REAL;
+            boolean aux2Numeric = aux2 == TabelaDeSimbolos.TipoLA.INTEIRO || aux2 == TabelaDeSimbolos.TipoLA.REAL;
+
+            if ((aux1Numeric && aux2Numeric) || aux1 == aux2) {
+                ret = TabelaDeSimbolos.TipoLA.LOGICO;
+            } else {
+                ret = TabelaDeSimbolos.TipoLA.INVALIDO;
+            }
+        } else {
+            ret = verificarTipo(escopos, ctx.expAritmetica(0));
+        }
+        return ret;
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ExpAritmeticaContext ctx) {
+        TabelaDeSimbolos.TipoLA ret = null;
+        for (var ta : ctx.termo()) {
+            TabelaDeSimbolos.TipoLA aux = verificarTipo(escopos, ta);
+            if (ret == null) {
+                ret = aux;
+            } else {
+                boolean auxNumeric = aux == TabelaDeSimbolos.TipoLA.INTEIRO || aux == TabelaDeSimbolos.TipoLA.REAL;
+                boolean retNumeric = ret == TabelaDeSimbolos.TipoLA.INTEIRO || ret == TabelaDeSimbolos.TipoLA.REAL;
+
+                if (auxNumeric && retNumeric) {
+                    // Promoção de tipo: inteiro + real = real
+                    if (ret == TabelaDeSimbolos.TipoLA.REAL || aux == TabelaDeSimbolos.TipoLA.REAL) {
+                        ret = TabelaDeSimbolos.TipoLA.REAL;
+                    }
+                } else if (ret != aux && aux != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                    ret = TabelaDeSimbolos.TipoLA.INVALIDO;
+                }
+            }
+        }
+        return ret;
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.TermoContext ctx) {
+        TabelaDeSimbolos.TipoLA ret = null;
+        for (var fa : ctx.fator()) {
+            TabelaDeSimbolos.TipoLA aux = verificarTipo(escopos, fa);
+            if (ret == null) {
+                ret = aux;
+            } else {
+                boolean auxNumeric = aux == TabelaDeSimbolos.TipoLA.INTEIRO || aux == TabelaDeSimbolos.TipoLA.REAL;
+                boolean retNumeric = ret == TabelaDeSimbolos.TipoLA.INTEIRO || ret == TabelaDeSimbolos.TipoLA.REAL;
+
+                if (auxNumeric && retNumeric) {
+                    if (ret == TabelaDeSimbolos.TipoLA.REAL || aux == TabelaDeSimbolos.TipoLA.REAL) {
+                        ret = TabelaDeSimbolos.TipoLA.REAL;
+                    }
+                } else if (ret != aux && aux != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                    ret = TabelaDeSimbolos.TipoLA.INVALIDO;
+                }
+            }
+        }
+        return ret;
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.FatorContext ctx) {
+        TabelaDeSimbolos.TipoLA ret = null;
+        for (var pa : ctx.parcela()) {
+            TabelaDeSimbolos.TipoLA aux = verificarTipo(escopos, pa);
+            if (ret == null) {
+                ret = aux;
+            } else if (ret != aux && aux != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                ret = TabelaDeSimbolos.TipoLA.INVALIDO;
+            }
+        }
+        return ret;
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ParcelaContext ctx) {
+        if (ctx.parcelaNaoUnitaria() != null) {
+            return verificarTipo(escopos, ctx.parcelaNaoUnitaria());
+        } else {
+            return verificarTipo(escopos, ctx.parcelaUnitaria());
+        }
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ParcelaUnitariaContext ctx) {
+        if (ctx.NUMINT() != null) return TabelaDeSimbolos.TipoLA.INTEIRO;
+        if (ctx.NUMREAL() != null) return TabelaDeSimbolos.TipoLA.REAL;
+        if (ctx.identificador() != null) return verificarTipo(escopos, ctx.identificador());
+
+        if (ctx.IDENT() != null) {
+            String nomeFuncao = ctx.IDENT().getText();
+            TabelaDeSimbolos.EntradaTabelaDeSimbolos func = escopos.buscar(nomeFuncao);
+
+            if (func != null && func.categoria == TabelaDeSimbolos.Categoria.FUNCAO) {
+                java.util.List<GrammarT5Parser.ExpressaoContext> expressoes = ctx.expressao();
+
+                // Incompatibilidade de quantidade ou tipo de parametros
+                if (expressoes.size() != func.parametrosFormais.size()) {
+                    adicionarErroSemantico(ctx.IDENT().getSymbol(), "incompatibilidade de parametros na chamada de " + nomeFuncao);
+                } else {
+                    for (int i = 0; i < expressoes.size(); i++) {
+                        TabelaDeSimbolos.TipoLA tipoArg = verificarTipo(escopos, expressoes.get(i));
+                        TabelaDeSimbolos.EntradaTabelaDeSimbolos paramForm = func.parametrosFormais.get(i);
+                        TabelaDeSimbolos.TipoLA tipoParam = paramForm.tipo;
+
+                        boolean erroParam = false;
+
+                        if (tipoArg != tipoParam) erroParam = true;
+
+                        if (tipoArg == TabelaDeSimbolos.TipoLA.REGISTRO && tipoParam == TabelaDeSimbolos.TipoLA.REGISTRO) {
+                            String nomeTipoArg = obterNomeTipoCustomizado(escopos, expressoes.get(i));
+                            if (paramForm.nomeTipoCustomizado == null || !paramForm.nomeTipoCustomizado.equals(nomeTipoArg)) {
+                                erroParam = true;
+                            } else {
+                                erroParam = false; // Nomes customizados batem
+                            }
+                        }
+
+                        // Ignora se o argumento for INVALIDO para não duplicar o erro
+                        if (erroParam && tipoArg != TabelaDeSimbolos.TipoLA.INVALIDO) {
+                            adicionarErroSemantico(ctx.IDENT().getSymbol(), "incompatibilidade de parametros na chamada de " + nomeFuncao);
+                            break;
+                        }
+                    }
+                }
+                return func.tipo; // Retorna o tipo de retorno da função para o calculo da expressão
+            }
+            return TabelaDeSimbolos.TipoLA.INVALIDO;
+        } else {
+            return verificarTipo(escopos, ctx.expressao(0));
+        }
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.ParcelaNaoUnitariaContext ctx) {
+        if (ctx.identificador() != null) {
+            // Se possui &
+            return TabelaDeSimbolos.TipoLA.ENDERECO;
+        }
+        return TabelaDeSimbolos.TipoLA.LITERAL; // É uma CADEIA
+    }
+
+    public static TabelaDeSimbolos.TipoLA verificarTipo(Escopos escopos, GrammarT5Parser.IdentificadorContext ctx) {
+        String nomeVar = ctx.IDENT(0).getText();
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos entrada = escopos.buscar(nomeVar);
+
+        if (entrada == null) {
+            return TabelaDeSimbolos.TipoLA.INVALIDO;
+        }
+
+        // Se o identificador tem partes separadas por ponto
+        if (ctx.IDENT().size() > 1) {
+            TabelaDeSimbolos tabelaAtual = entrada.camposRegistro;
+
+            for (int i = 1; i < ctx.IDENT().size(); i++) {
+                String parte = ctx.IDENT(i).getText();
+
+                if (tabelaAtual != null && tabelaAtual.existe(parte)) {
+                    entrada = tabelaAtual.verificar(parte);
+                    tabelaAtual = entrada.camposRegistro;
+                } else {
+                    return TabelaDeSimbolos.TipoLA.INVALIDO;
+                }
+            }
+        }
+
+        return entrada.tipo;
+    }
+
+    public static String obterNomeTipoCustomizado(Escopos escopos, GrammarT5Parser.ExpressaoContext ctx) {
+        String nomeVar = ctx.getText();
+
+        nomeVar = nomeVar.replace("&", "").replace("^", "");
+
+        // CORREÇÃO DO TESTE 6
+        if (nomeVar.contains("[")) {
+            nomeVar = nomeVar.split("\\[")[0];
+        }
+
+        if (nomeVar.contains(".")) {
+            nomeVar = nomeVar.split("\\.")[0];
+        }
+
+        TabelaDeSimbolos.EntradaTabelaDeSimbolos entrada = escopos.buscar(nomeVar);
+        if (entrada != null) {
+            return entrada.nomeTipoCustomizado;
+        }
+        return null;
+    }
+}
